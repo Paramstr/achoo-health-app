@@ -5,6 +5,8 @@ import { Textarea, Button } from "@nextui-org/react";
 import CustomTextEntry from "../app/components/CustomTextEntry";
 import SymptomButtons from "../app/components/SymptomButtons";
 
+type ButtonState = "current" | "potential" | "default";
+
 interface Symptoms {
   current_symptoms: string[];
   potential_symptoms: string[];
@@ -17,6 +19,20 @@ export default function Home() {
     current_symptoms: [],
     potential_symptoms: [],
   });
+
+  // Sympytom Buttons
+  const handleSymptomClick = (symptom: string, state: ButtonState) => {
+    if (state === "potential") {
+      setSymptoms((prevSymptoms) => ({
+        current_symptoms: [...prevSymptoms.current_symptoms, symptom],
+        potential_symptoms: prevSymptoms.potential_symptoms.filter(
+          (s) => s !== symptom
+        ),
+      }));
+    }
+  };
+
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleInputChange = (value: string): void => {
@@ -97,6 +113,7 @@ export default function Home() {
         <SymptomButtons
           currentSymptoms={symptoms.current_symptoms}
           potentialSymptoms={symptoms.potential_symptoms}
+          onSymptomClick={handleSymptomClick}
         />
       </div>
     </main>
