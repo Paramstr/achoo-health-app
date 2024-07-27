@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Textarea, Button } from "@nextui-org/react";
+import { Textarea, Button, Spinner } from "@nextui-org/react";
 import CustomTextEntry from "../app/components/CustomTextEntry";
 import SymptomButtons from "../app/components/SymptomButtons";
 import CustomAnimatedRadio from "../app/components/CustomAnimatedRadio";
@@ -23,7 +23,6 @@ interface MarkdownFile {
   content: string;
 }
 export default function Home() {
-  
   // Add a new state variable for tracking the current step
   const [loadingStep, setLoadingStep] = useState<string | null>(null);
 
@@ -299,26 +298,102 @@ export default function Home() {
     }
   }
 
+  // Update the chainedFunction to use the new loadingStep state
+  async function chainedFunction(
+    url: string,
+    elementPrompts: string[],
+    inputValue: string
+  ) {
+    try {
+      // Step 1: First Groq call for symptoms
+      setLoadingStep("Groking your yucky sickness...");
+      const symptomPrompt = `
+        You are a personal health assistant. Based on the user's description of their symptoms, 
+        output a JSON object with the following structure:
+        {
+          "current_symptoms": ["symptom1", "symptom2", ...],
+          "potential_symptoms": ["symptom1", "symptom2", ...]
+        }
+        Ensure only the names of the symptoms are provided.`;
+
+      await sendGroq(inputValue, symptomPrompt);
+
+      // Step 2: Call Jigsaw
+      setLoadingStep("Jigsawing and stacking recent events...");
+      const jigsawResult = await scrapeWithJigsawStack(url, elementPrompts);
+      setJigsawResult(jigsawResult);
+      console.log("Jigsaw Result:", jigsawResult);
+
+      // Step 3: Second GPT4 call for LLM analysis
+      setLoadingStep("Getting inference...");
+      const analysisPrompt = `
+        You are a medical assistant. Use the provided current events and current symptoms to provide a more detailed analysis. 
+        The current events provide wider geographical context for the user. 
+        Output your response as a JSON object with the following structure:
+        {
+          "response": "Your detailed analysis and potential diagnosis here"
+        }`;
+      const structuredMessage = `
+        User Input: ${inputValue}\n
+        Current Events: ${JSON.stringify(jigsawResult)}\n
+        Current Symptoms: ${JSON.stringify(symptoms.current_symptoms)}
+        Past Week Health Summary: ${JSON.stringify(Sahha_healthData)}
+
+        Based on the above information, please provide a detailed analysis and potential diagnosis.`;
+
+      const queryObject = {
+        message: `${JSON.stringify(structuredMessage)}`,
+      };
+
+      const result = await fetch("/api/openai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(queryObject),
+      });
+
+      if (!result.ok) {
+        throw new Error(
+          `API request failed: ${result.status} ${result.statusText}`
+        );
+      }
+
+      const json = await result.json();
+      setSahhaOutput(json);
+      console.log("API response data retrieved successfully and stored");
+
+      console.log("Chained function completed successfully");
+    } catch (error) {
+      console.error("Error in chained function:", error);
+      setResponse(
+        `An error occurred: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    } finally {
+      setLoadingStep(null); // Reset loading step when done
+    }
+  }
+
+  // Update the handleChainedFunction to reset loadingStep
   const handleChainedFunction = async () => {
     if (!inputValue.trim()) return;
 
     setIsLoading(true);
     setResponse("");
     setSymptoms({ current_symptoms: [], potential_symptoms: [] });
+    setLoadingStep(null); // Reset loading step
 
     try {
-      // You'll need to define these values
       const url =
         "https://www.kqed.org/news/11987343/covid-bay-area-wastewater-variant-symptoms-isolation-guidance";
       const elementPrompts = ["title", "covid cases", "symptoms"];
 
       await chainedFunction(url, elementPrompts, inputValue);
 
-      // The state should now be updated by the sendGroq calls within chainedFunction
-      // You might want to add a small delay here to ensure state updates are complete
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Now you can access the updated state
       console.log("Updated symptoms:", symptoms);
       console.log("Updated response:", response);
     } catch (error) {
@@ -330,91 +405,23 @@ export default function Home() {
       );
     } finally {
       setIsLoading(false);
+      setLoadingStep(null); // Ensure loading step is reset
     }
   };
 
-  // Update the chainedFunction to use the component's state
-  // Updated chainedFunction
-  async function chainedFunction(
-    url: string,
-    elementPrompts: string[],
-    inputValue: string
-  ) {
-    try {
-      ////////////////////////////////////////
-      // Step 1: First Groq call for symptoms
-
-      const symptomPrompt = `
-    You are a personal health assistant. Based on the user's description of their symptoms, 
-    output a JSON object with the following structure:
-    {
-      "current_symptoms": ["symptom1", "symptom2", ...],
-      "potential_symptoms": ["symptom1", "symptom2", ...]
-    }
-    Ensure only the names of the symptoms are provided.`;
-
-      await sendGroq(inputValue, symptomPrompt);
-      ////////////////////////////////////////
-      // Step 2: Call Jigsaw
-
-      const jigsawResult = await scrapeWithJigsawStack(url, elementPrompts);
-      setJigsawResult(jigsawResult);
-      console.log("Jigsaw Result:", jigsawResult);
-
-      ////////////////////////////////////////
-      // Step 3: Second GPT4 call for LLM analysis
-
-      const analysisPrompt = `
-    You are a medical assistant. Use the provided current events and current symptoms to provide a more detailed analysis. 
-    The current events provide wider geographical context for the user. 
-    Output your response as a JSON object with the following structure:
-    {
-      "response": "Your detailed analysis and potential diagnosis here"
-    }`;
-      const structuredMessage = `
-    User Input: ${inputValue}\n
-    Current Events: ${JSON.stringify(jigsawResult)}\n
-    Current Symptoms: ${JSON.stringify(symptoms.current_symptoms)}
-    Past Week Health Summary: ${JSON.stringify(Sahha_healthData)}
-
-    Based on the above information, please provide a detailed analysis and potential diagnosis.`;
-
-      //await sendGroq(structuredMessage, analysisPrompt);
-
-      const queryObject = {
-        message: `${JSON.stringify(structuredMessage)}`,
-      };
-
-      console.log("QueryObject:", queryObject); // For debugging
-
-      const result = await fetch("/api/openai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(queryObject),
-      });
-      //Over here?
-      if (!result.ok) {
-        throw new Error(
-          `API request failed: ${result.status} ${result.statusText}`
-        );
-      }
-
-      const json = await result.json();
-      setSahhaOutput(json); // Adjust according to the actual data structure
-      console.log("API response data retrieved successfully and stored");
-
-      console.log("Chained function completed successfully");
-    } catch (error) {
-      console.error("Error in chained function:", error);
-      setResponse(
-        `An error occurred: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+  // Updated LoadingIndicator component with custom CSS spinner
+  const LoadingIndicator = () => {
+    if (loadingStep) {
+      return (
+        <div className="flex items-center space-x-2 text-gray-600 my-4">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+          <span>{loadingStep}</span>
+        </div>
       );
+    } else {
+      return null;
     }
-  }
+  };
 
   ////////////////////////////////////////////////////////////////////
 
@@ -445,6 +452,10 @@ export default function Home() {
           onSubmit={handleChainedFunction}
           placeholder={placeholderText}
         />
+
+        <div className="flex justify-center w-full">
+          <LoadingIndicator />
+        </div>
 
         <Textarea
           isReadOnly
