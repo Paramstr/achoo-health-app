@@ -6,26 +6,17 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json();
-
-    const prompt = `
-    You are a personal health assistant. Based on the user's description of their symptoms, 
-    output a JSON object with the following structure:
-    {
-      "current_symptoms": ["symptom1", "symptom2", ...],
-      "potential_symptoms": ["symptom1", "symptom2", ...]
-    }
-    Ensure only the names of the symptoms are provided.
-    User: ${message}`;
+    const { message, systemPrompt } = await request.json();
 
     console.log("Sending request to Groq:");
-    console.log(prompt);
+    console.log("System Prompt:", systemPrompt);
+    console.log("User Message:", message);
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: prompt,
+          content: systemPrompt,
         },
         {
           role: "user",
