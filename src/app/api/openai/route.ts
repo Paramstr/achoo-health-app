@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         # 🏥 Health Analysis Guide
 
         You are a health specialist analyzing the user's data for a week. Each day of data contains wellbeing, activity, and sleep scores. Your analysis should be comprehensive, focusing on general trends and behaviors rather than specific numerical scores.
-
+        --Begin--
         ## 📊 Weekly Health Summary
 
         ### 📈 Overall Trends
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     console.log("OpenAI response:", response);
 
-    return NextResponse.json({ response });
+    return NextResponse.json({response});
 
   } catch (error) {
     console.error('Error in API route:', error);

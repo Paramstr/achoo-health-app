@@ -299,7 +299,7 @@ export default function Home() {
     }
   }
 
-  const [sahhaOutput, setSahhaOutput] = useState<string>("");
+  const [sahhaOutput, setSahhaOutput] = useState<string>();
 
   // Update the chainedFunction to use the new loadingStep state
   async function chainedFunction(
@@ -366,7 +366,7 @@ export default function Home() {
       console.log("Type of data.response:", typeof data.response); // This will log the type of data.response
       const responseAsString = JSON.stringify(data.response); // Convert the response to a string
       console.log("Type of responseAsString:", typeof responseAsString); // This will log the type of responseAsString
-      setSahhaOutput(responseAsString); // Store the string version of the response
+      setSahhaOutput(data.response); // Store the string version of the response
       console.log("API response data retrieved successfully and stored");
       console.log("Chained function completed successfully");
 
@@ -395,7 +395,7 @@ export default function Home() {
     try {
       const url =
         "https://www.kqed.org/news/11987343/covid-bay-area-wastewater-variant-symptoms-isolation-guidance";
-      const elementPrompts = ["title", "covid cases", "symptoms"];
+      const elementPrompts = ["title", "headlines", "covid cases"];
 
       await chainedFunction(url, elementPrompts, inputValue);
 
@@ -475,14 +475,19 @@ export default function Home() {
           value={isLoading ? "Loading..." : response}
         /> */}
 
-
         <SymptomButtons
           currentSymptoms={symptoms.current_symptoms}
           potentialSymptoms={symptoms.potential_symptoms}
           onSymptomClick={handleSymptomClick}
         />
 
-        {!isLoading && sahhaOutput && <HealthSummary data={sahhaOutput} />}
+        {!isLoading && sahhaOutput && (
+          <div className="p-8">
+            {" "}
+            {/* Adjust padding as needed */}
+            <HealthSummary data={sahhaOutput} />
+          </div>
+        )}
       </div>
     </main>
   );
