@@ -1,28 +1,7 @@
-// app/api/openai/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import fs from 'fs/promises';
-import path from 'path';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// async function loadMarkdownFiles(): Promise<string> {
-//   const directoryPath = path.join(process.cwd(), 'public', 'core');
-//   const fileNames = await fs.readdir(directoryPath);
-//   const markdownFiles = [];
-
-//   for (const fileName of fileNames) {
-//     if (fileName.endsWith('.md')) {
-//       const content = await fs.readFile(path.join(directoryPath, fileName), 'utf8');
-//       markdownFiles.push({ name: fileName, content });
-//     }
-//   }
-
-//   // Create the markdown string to be appended to the OpenAI prompt
-//   return markdownFiles
-//     .map((file: { name: string; content: string; }) => `${file.content}\nsource: ${file.name}`)
-//     .join("\n\n");
-// }
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,30 +24,67 @@ export async function POST(request: NextRequest) {
 
     console.log("Message sent to api/openai:", message);
 
-    // const markdownString = await loadMarkdownFiles();
-
     const prompt = `
-      You are a health specialist analyzing the same user's data for a week. Each day of data contains wellbeing, activity and sleep scores. Inside of each score there are factors.
-      Your analysis should be comprehensive, focusing on general trends and behaviors rather than specific numerical scores.
-      Please structure your response in the following format, using markdown headers:
-      # Weekly Health Summary
-      ## Overall Trends
-      ## Strengths
-      ## Areas for Improvement
-      ## Impact on Well-being
-      Remember to maintain a supportive and encouraging tone throughout your analysis.
-      Focus on empowering the user with knowledge and practical advice for optimal health.
-    \n\nAdditional Information:\n`;
+        # 🏥 Health Analysis Guide
+
+        You are a health specialist analyzing the user's data for a week. Each day of data contains wellbeing, activity, and sleep scores. Your analysis should be comprehensive, focusing on general trends and behaviors rather than specific numerical scores.
+
+        ## 📊 Weekly Health Summary
+
+        ### 📈 Overall Trends
+        [Provide a brief overview of the general health trends observed over the week]
+
+        ### 💪 Strengths
+        - **[Strength Title]**: [Description of the strength]
+        - **[Strength Title]**: [Description of the strength]
+
+        ### 🎯 Areas for Improvement
+        - **[Area Title]**: [Description of the area needing improvement]
+        - **[Area Title]**: [Description of the area needing improvement]
+
+        ### 🌟 Impact on Wellbeing
+
+        #### 😊 Positive Impacts
+        - **[Aspect]**: [Description of the positive impact]
+        - **[Aspect]**: [Description of the positive impact]
+
+        #### ⚠️ Potential Risks
+        - **[Risk]**: [Description of the potential risk]
+        - **[Risk]**: [Description of the potential risk]
+
+        ### 💡 Advice
+        [Provide practical advice for improving overall health based on the analysis]
+
+        ## 🤒 Current Symptoms
+        - [Symptom 1]
+        - [Symptom 2]
+        - [Symptom 3]
+
+        ## 🩺 Potential Diagnosis
+        **Condition**: [Name of the potential condition]
+
+        **Description**: [Brief description of the condition]
+
+        **Recommendations**:
+        1. 💊 [Recommendation 1]
+        2. 🍎 [Recommendation 2]
+        3. 🧘 [Recommendation 3]
+
+        Maintain a supportive and encouraging tone throughout your analysis. Focus on empowering the user with knowledge and practical advice for optimal health. Ensure all sections are filled with appropriate content based on the provided data.
+        Provide your answer in strict markdown format.
+
+        Additional Information:
+        [Any additional context or information provided by the user]
+    `;
 
     console.log("Sending request to OpenAI...");
 
     const chatCompletion = await openai.chat.completions.create({
       messages: [
         { role: "system", content: prompt },
-        { role: "user", content: `Analyze the following data and provide a response in JSON format: ${message}`},      
-    ],
-      model: "gpt-4-turbo", // or "gpt-3.5-turbo" if you don't have access to GPT-4
-      response_format: { type: "json_object" },
+        { role: "user", content: message },
+      ],
+      model: "gpt-4o", // or "gpt-3.5-turbo" if you don't have access to GPT-4
     });
 
     console.log("OpenAI request received.");
@@ -79,12 +95,9 @@ export async function POST(request: NextRequest) {
       throw new Error('Empty response from OpenAI');
     }
 
-    console.log("OpenAI raw response:", response);
+    console.log("OpenAI response:", response);
 
-    const parsedResponse = JSON.parse(response);
-    console.log("Parsed OpenAI response:", parsedResponse);
-
-    return NextResponse.json(parsedResponse);
+    return NextResponse.json({ response });
 
   } catch (error) {
     console.error('Error in API route:', error);

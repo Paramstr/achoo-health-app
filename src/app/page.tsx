@@ -5,6 +5,7 @@ import { Textarea, Button, Spinner } from "@nextui-org/react";
 import CustomTextEntry from "../app/components/CustomTextEntry";
 import SymptomButtons from "../app/components/SymptomButtons";
 import CustomAnimatedRadio from "../app/components/CustomAnimatedRadio";
+import HealthSummary from "../app/components/HealthSummary";  // Adjust the import path as necessary
 
 import { RadioGroup, Radio } from "@nextui-org/react";
 
@@ -28,6 +29,7 @@ export default function Home() {
 
   //Get health data
   const [Sahha_healthData, setHealthData] = useState<string>("");
+  
 
   useEffect(() => {
     fetch("/api/health-data")
@@ -164,7 +166,6 @@ export default function Home() {
   };
 
   ////////////////////////////////////////////////////////////////////
-  const [sahhaOutput, setSahhaOutput] = useState<string[]>([]);
   async function getWeekInsight() {
     console.log("DEBUG 1");
 
@@ -298,6 +299,8 @@ export default function Home() {
     }
   }
 
+  const [sahhaOutput, setSahhaOutput] = useState<string>("");
+
   // Update the chainedFunction to use the new loadingStep state
   async function chainedFunction(
     url: string,
@@ -326,13 +329,13 @@ export default function Home() {
 
       // Step 3: Second GPT4 call for LLM analysis
       setLoadingStep("Getting inference...");
-      const analysisPrompt = `
-        You are a medical assistant. Use the provided current events and current symptoms to provide a more detailed analysis. 
-        The current events provide wider geographical context for the user. 
-        Output your response as a JSON object with the following structure:
-        {
-          "response": "Your detailed analysis and potential diagnosis here"
-        }`;
+      // const analysisPrompt = `
+      //   You are a medical assistant. Use the provided current events and current symptoms to provide a more detailed analysis.
+      //   The current events provide wider geographical context for the user.
+      //   Output your response as a JSON object with the following structure:
+      //   {
+      //     "response": "Your detailed analysis and potential diagnosis here"
+      //   }`;
       const structuredMessage = `
         User Input: ${inputValue}\n
         Current Events: ${JSON.stringify(jigsawResult)}\n
@@ -359,9 +362,13 @@ export default function Home() {
         );
       }
 
-      const json = await result.json();
-      setSahhaOutput(json);
+      const data = await result.json();
+      console.log("Type of data.response:", typeof data.response); // This will log the type of data.response
+      const responseAsString = JSON.stringify(data.response); // Convert the response to a string
+      console.log("Type of responseAsString:", typeof responseAsString); // This will log the type of responseAsString
+      setSahhaOutput(responseAsString); // Store the string version of the response
       console.log("API response data retrieved successfully and stored");
+      console.log("Chained function completed successfully");
 
       console.log("Chained function completed successfully");
     } catch (error) {
@@ -457,22 +464,25 @@ export default function Home() {
           <LoadingIndicator />
         </div>
 
-        <Textarea
+        {/* <Textarea
           isReadOnly
           label="LLM Output"
           variant="bordered"
           labelPlacement="outside"
-          placeholder="Response will appear here..."
+          placeholder=""
           color="default"
           className="max-w-xs text-black rounded border-gray-300 border bg-gray-200 px mt-4 mb-4"
           value={isLoading ? "Loading..." : response}
-        />
+        /> */}
+
 
         <SymptomButtons
           currentSymptoms={symptoms.current_symptoms}
           potentialSymptoms={symptoms.potential_symptoms}
           onSymptomClick={handleSymptomClick}
         />
+
+        {!isLoading && sahhaOutput && <HealthSummary data={sahhaOutput} />}
       </div>
     </main>
   );
