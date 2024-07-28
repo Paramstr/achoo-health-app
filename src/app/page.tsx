@@ -438,7 +438,7 @@ export default function Home() {
         Achoo
       </h1>
       <p className="text-2xl mb-8 text-black pb-5">
-        Super Supportive Sickness Buddy
+        Super Supportive Sickness Buddy 🤧
       </p>
       {/* Sahha button  */}
       <SahhaConnectButton />

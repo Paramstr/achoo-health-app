@@ -9,13 +9,8 @@ interface MarkdownDisplayProps {
 
 
 const MarkdownDisplay: React.FC<MarkdownDisplayProps> = ({ data }) => {
-  const trimmedData = data.trim();
 
-    console.log("Data Type:", typeof data);
-    console.log("Trimmed Data Type:", typeof trimmedData);
 
-    console.log("Data Value:", data);
-    console.log("Trimmed Data Value:", trimmedData);
 
 
   return (
