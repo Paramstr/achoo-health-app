@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import CustomTextEntry from "../app/components/CustomTextEntry";
-import SymptomButtons from "../app/components/SymptomButtons";
-import CustomAnimatedRadio from "../app/components/CustomAnimatedRadio";
-import HealthSummary from "../app/components/HealthSummary";
+import * as Components from "../app/components/index";
 import { handleChainedFunction } from "./utils";
 import { Symptoms, ButtonState } from "./types";
 
@@ -153,7 +150,7 @@ export default function Home() {
       <SahhaConnectButton />
 
       <div className="p-8">
-        <CustomAnimatedRadio onSelectionChange={handleCityChange} />
+        <Components.CustomAnimatedRadio onSelectionChange={handleCityChange} />
         {selectedCity && (
           <p className="mt-4 text-lg text-gray-500">
             You selected: {selectedCity}
@@ -162,7 +159,7 @@ export default function Home() {
       </div>
 
       <div className="w-full max-w-4xl">
-        <CustomTextEntry
+        <Components.CustomTextEntry
           value={inputValue}
           onChange={handleInputChange}
           onSubmit={onSubmit}
@@ -173,7 +170,7 @@ export default function Home() {
           <LoadingIndicator />
         </div>
 
-        <SymptomButtons
+        <Components.SymptomButtons
           currentSymptoms={symptoms.current_symptoms}
           potentialSymptoms={symptoms.potential_symptoms}
           onSymptomClick={handleSymptomClick}
@@ -181,7 +178,7 @@ export default function Home() {
 
         {!isLoading && sahhaOutput && (
           <div className="p-8">
-            <HealthSummary data={sahhaOutput} />
+            <Components.HealthSummary data={sahhaOutput} />
           </div>
         )}
       </div>
